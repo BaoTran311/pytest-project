@@ -3,8 +3,7 @@ urls:
   oauth2: https://oauth2-api-4qc-nolimit.k8s.flostage.com
   v4: https://v41-api-qc-nolimit.k8s.flostage.com
   sabredav: https://dav.k8s.flostage.com
-  #  web: https://flo.k8s.flostage.com
-  web: https://www.google.com/
+  web: https://flo.k8s.flostage.com
 smtp_host: smtp.flostage.com
 smtp_port: 465
 imap_host: imap.flostage.com
