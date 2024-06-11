@@ -1,0 +1,7 @@
+selenium==4.11.2
+webdriver_manager
+pytest
+colorlog
+allure-pytest
+pyyaml
+pycryptodome
