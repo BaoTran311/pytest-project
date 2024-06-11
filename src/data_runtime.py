@@ -1,2 +1,2 @@
 class DataRuntime:
-    ...
+    pass
