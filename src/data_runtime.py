@@ -1,2 +1,6 @@
+from src.utils import dotdict
+
+
 class DataRuntime:
-    pass
+    runtime_options: dotdict
+    config: dotdict

@@ -1,15 +1,18 @@
 import builtins
 import logging
 import time
+from contextlib import suppress
 from datetime import datetime
 
+import allure
 import pytest
 import yaml
 
 from src import consts
 from src.data_runtime import DataRuntime
-from src.page_container import PageContainer
-from src.utils import logger, webdriver_util, create_handler_logger, dotdict, string_util
+from src.utils import logger, create_handler_logger, dotdict, string_util
+
+_msg_logs = []
 
 
 def pytest_addoption(parser):
@@ -46,12 +49,6 @@ def pytest_sessionstart(session):
         create_handler_logger(logging.DEBUG)
 
 
-# def pytest_runtest_teardown(item):  # After each test case
-#     logger.info("pytest_runtest_teardown")
-#     print("\x00")  # print a non-printable character to break a new line on console
-#     item_location, *_ = item.location
-
-
 def pytest_runtest_logreport(report):
     if report.when == "call":
         test_case_name = report.nodeid.split("/")[-1].split(".")[0]
@@ -67,45 +64,83 @@ def pytest_runtest_logreport(report):
         printlog("-------------")
 
 
-# @pytest.hookimpl(hookwrapper=True)
-# def pytest_runtest_makereport(item, call):
-#     logger.info("pytest_runtest_makereport - before")
-#     report = (yield).get_result()
-#     logger.info("pytest_runtest_makereport - after")
-#     if report.when == "call":
-#         # pytest.set_trace()
-#         ...
-#     # allure.step("asdfasdf")
+@pytest.fixture(scope="session", autouse=True)
+def auto_allure_logging():
+    global _msg_logs
+
+    def patchinfo(f):
+        def wrapper(*args, **kwargs):
+            *_, _logs = args
+
+            with suppress(Exception):
+                # Avoid error _logs is not string
+                _msg_log_check = _logs.lower()  # Copy avoid cook data
+                _log_msgs_checking = "verify step steps".split()
+                if any(_msgs in _msg_log_check for _msgs in _log_msgs_checking):
+                    _msg_logs.append(_logs)
+
+            return f(*args, **kwargs)
+
+        return wrapper
+
+    logging.Logger.info = patchinfo(logging.Logger.info)
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    global _msg_logs
+
+    report = (yield).get_result()
+    if report.when == "call":
+        test_steps = []
+
+        # Find index step in list
+        # get description from index
+        steps_index = [
+            index for index, value in enumerate(_msg_logs)
+            if ("step" or "steps" or "Should see") in value.lower()
+        ]
+
+        for i in range(len(steps_index)):
+            if i == (len(steps_index) - 1):
+                test_steps.append(_msg_logs[steps_index[i]:])
+                break
+            test_steps.append(_msg_logs[steps_index[i]: steps_index[i + 1]])
+
+        # Log test to allure reports
+        for steps in test_steps:
+            step = steps.pop(0)
+            with allure.step(step):
+                for verify in steps:
+                    with allure.step(verify):
+                        pass
+
+        del _msg_logs[:]
 
 
 def pytest_sessionfinish(session):
     print("\x00")  # print a non-printable character to break a new line on console
     logger.info("=== End tests session ===")
     logger.info("‣ Quit driver session")
-    if hasattr(builtins, "list_driver"):
+    if hasattr(builtins, "dict_driver"):
         time.sleep(2)  # Calm down for clean up data,
-        for driver in getattr(builtins, "list_driver"):
+        for _, driver in getattr(builtins, "dict_driver").items():
             driver.quit()
 
 
-# @pytest.hookimpl(tryfirst=True)
-# def pytest_runtest_setup(item: pytest.Item):
-#     print("\x00")
-#     logger.info("pytest_runtest_setup")
-#
-#
+@pytest.hookimpl(tryfirst=True)
+def pytest_runtest_setup(item: pytest.Item):
+    print("\x00")
+
+
 # def pytest_runtest_call(item):
 #     logger.info("pytest_runtest_call")
 
 
-@pytest.fixture(scope="session", name="page", autouse=True)
-def page_manager():
-    logger.info("Starting webdriver ...")
-    print("\x00")
-    driver = webdriver_util.create_chrome_driver(headless=DataRuntime.runtime_option.headless)
-    setattr(builtins, "dict_driver", {DataRuntime.config.platforms.web: driver})
-    return PageContainer(driver)
-
+# def pytest_runtest_teardown(item):  # After each test case
+#     logger.info("pytest_runtest_teardown")
+#     print("\x00")  # print a non-printable character to break a new line on console
+#     item_location, *_ = item.location
 
 @pytest.fixture(scope="session", name="screen")
 def screen_container():

@@ -11,9 +11,15 @@ class LoginPage(GeneralPage):
     __txt_username = (By.NAME, "sign_username__")
     __txt_password = (By.NAME, "sign_passwd__")
     __btn_login = (By.XPATH, "//button[text()='Sign In']")
+    __txt_error = (By.CSS_SELECTOR, "#LoginForm .error-text")
 
     def login(self, username, password):
-        # if self.actions.is_displayed(self.__txt_username):
         self.actions.send_keys(self.__txt_username, username, press=Keys.TAB)
         self.actions.send_keys(self.__txt_password, password, press=Keys.TAB)
         self.actions.click(self.__btn_login)
+
+    def get_error_text(self):
+        return self.actions.get_text(self.__txt_error)
+
+    def verify_error_text_is_displayed_with_correct_content(self, content):
+        assert self.get_error_text() == content
