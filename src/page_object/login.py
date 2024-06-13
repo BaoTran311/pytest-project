@@ -14,6 +14,7 @@ class LoginPage(GeneralPage):
     __txt_error = (By.CSS_SELECTOR, "#LoginForm .error-text")
 
     def login(self, username, password):
+        self.logger.debug(f"Account: {username} - {password}")
         self.actions.send_keys(self.__txt_username, username, press=Keys.TAB)
         self.actions.send_keys(self.__txt_password, password, press=Keys.TAB)
         self.actions.click(self.__btn_login)

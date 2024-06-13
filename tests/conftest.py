@@ -1,8 +1,11 @@
 import builtins
+import json
 import logging
 import time
 from contextlib import suppress
 from datetime import datetime
+from json import JSONDecodeError
+from pathlib import Path
 
 import allure
 import pytest
@@ -10,7 +13,7 @@ import yaml
 
 from src import consts
 from src.data_runtime import DataRuntime
-from src.utils import logger, create_handler_logger, dotdict, string_util
+from src.utils import logger, create_handler_logger, dotdict, string_util, file_util, datetime_util
 
 _msg_logs = []
 
@@ -34,6 +37,7 @@ def pytest_sessionstart(session):
 
     logger.info("=== Start Pytest session ===")
     runtime_option = vars(session.config.option)
+
     if runtime_option["collectonly"]:  # count the total number of tests and then exit
         return
 
@@ -56,11 +60,11 @@ def pytest_runtest_logreport(report):
             printlog, status = (logger.info, "PASSED")
         elif report.failed:
             printlog, status = (logger.warning, "FAILED")
-            for platform, driver in getattr(builtins, "dict_driver").items():
-                driver.save_screenshot(f"{platform}_{datetime.now()}.png")
+            # screenshot if test case failed ==> TBD
+
         printlog("-------------")  # noqa
         printlog(f"Test case   | {test_case_name}")
-        printlog(f"Test status | {status}")
+        printlog(f"Test status | {status} ({datetime_util.pretty_time(report.duration)})")
         printlog("-------------")
 
 
@@ -113,9 +117,27 @@ def pytest_runtest_makereport(item, call):
             with allure.step(step):
                 for verify in steps:
                     with allure.step(verify):
-                        pass
+                        if report.failed:
+                            for platform, driver in getattr(builtins, "dict_driver").items():
+                                attach_name = f"{platform}_{datetime.now()}.png"
+                                allure.attach(
+                                    name=attach_name, body=driver.get_screenshot_as_png(),
+                                    attachment_type=allure.attachment_type.PNG,
+                                )
 
         del _msg_logs[:]
+
+
+def pytest_runtest_teardown(item):  # After each test case
+    print("\x00")  # print a non-printable character to break a new line on console
+    raw_tc_name = item.parent.name.split("_")[1:]
+    tc_name = f"{raw_tc_name[0]} - {" ".join(raw_tc_name[1:]).capitalize().replace(".py", "")}"
+    parent_suite, *test_suite = item.parent.module.__name__.split(".")[1:-1]
+
+    allure.dynamic.parent_suite(parent_suite.capitalize())
+    if test_suite:
+        allure.dynamic.suite(test_suite[-1].capitalize().replace("_", " "))
+    allure.dynamic.title(tc_name)
 
 
 def pytest_sessionfinish(session):
@@ -127,24 +149,60 @@ def pytest_sessionfinish(session):
         for _, driver in getattr(builtins, "dict_driver").items():
             driver.quit()
 
+    allure_result_dir = session.config.option.allure_report_dir
+    if not allure_result_dir:
+        return
 
-@pytest.hookimpl(tryfirst=True)
-def pytest_runtest_setup(item: pytest.Item):
-    print("\x00")
+    logger.info("‣ Customized allure test results")
+    # Delete all .container files
+    allure_result_dir = Path(allure_result_dir)
+    container_files = allure_result_dir.glob("*-container.json")
+    for container_file in container_files:
+        file_util.delete_file(container_file)
+
+    # Customize .json files
+    result_files = list(allure_result_dir.glob("*-result.json"))
+    for result_file in result_files:
+        with result_file.open("r", encoding="utf8") as _rf:
+            # Avoid error json file from allure generate
+            with suppress(JSONDecodeError):
+                json_obj = json.load(_rf)
+
+                test_case_result = json_obj['status']
+
+                # Check in steps have failed, and the test case's status has been changed to failed.
+                steps = json_obj.get("steps", "")
+                for _sub_steps in steps:
+                    sub_steps = _sub_steps.get("steps", "")
+                    for sub_step in sub_steps:
+                        if "verify" in sub_step['name'].lower() and test_case_result == "failed":
+                            sub_step["status"] = "failed"
+                            _sub_steps["status"] = "failed"
+                    # if "failed" in (step["status"] for step in sub_steps):
+                    #     _sub_steps["status"] = "failed"
+
+                # labels - allure report
+                # Present, cook (value, name in parentSuite and Suite)
+                #
+                raw_labels = json_obj["labels"]
+                json_obj["labels"] = [
+                    _label for _label in raw_labels
+                    if ("parentSuite" == _label.get('name') or "suite" == _label.get('name'))
+                       and _label.get('value').istitle()
+                ]
+
+                # This test has a bug link causing the test was broken.
+                if "links" in json_obj and json_obj["status"] == "broken":
+                    json_obj["status"] = "failed"
+
+                # Write the modified json object
+                with result_file.open("w") as _f:
+                    json.dump(json_obj, _f)
+
+# @pytest.hookimpl(tryfirst=True)
+# def pytest_runtest_setup(item: pytest.Item):
+#     print("\x00")
 
 
-# def pytest_runtest_call(item):
-#     logger.info("pytest_runtest_call")
-
-
-# def pytest_runtest_teardown(item):  # After each test case
-#     logger.info("pytest_runtest_teardown")
-#     print("\x00")  # print a non-printable character to break a new line on console
-#     item_location, *_ = item.location
-
-@pytest.fixture(scope="session", name="screen")
-def screen_container():
-    logger.info("Starting appium driver ...")
-    # driver = appium_util.create_driver()
-    # setattr(builtins, "dict_driver", {DataRuntime.platforms: driver})
-    # return PageContainer(driver)
+# def pytest_runtest_call(item):  # Before each test case
+# print("\x00")  # print a non-printable character to break a new line on console

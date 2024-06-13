@@ -5,5 +5,11 @@ from src.utils.element_util import ActionsElement
 class GeneralPage:
 
     def __init__(self, driver=None):
-        self.actions = ActionsElement(driver)
+        self._driver = driver
+        self.actions = ActionsElement(self._driver)
         self.logger = logger
+
+    def refresh(self):
+        self.logger.debug("Refresh page")
+        self._driver.execute_script("window.onbeforeunload = function() {};")
+        self._driver.refresh()

@@ -2,5 +2,5 @@ from src.utils import dotdict
 
 
 class DataRuntime:
-    runtime_options: dotdict
+    runtime_option: dotdict
     config: dotdict
