@@ -19,7 +19,7 @@ platforms:
     appium: 4727
     system: 10101
   iphone:
-    device_uid: F459908A-AA78-44FB-9C9F-CAE732B04C03
+    device_uid: B4ABAD62-84C5-48A4-808A-9F4579BD9AFB
     bundle_id: com.floware.flo.staging
     appium: 4725
     wda: 8102

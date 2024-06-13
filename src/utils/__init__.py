@@ -4,6 +4,7 @@ import platform
 from src import consts
 
 logger = logging.getLogger(consts.PYTHON_CONFIG)
+logging.getLogger("urllib3").setLevel(logging.ERROR)  # disable urllib3 Retrying warning messages
 
 
 def create_handler_logger(log_level):

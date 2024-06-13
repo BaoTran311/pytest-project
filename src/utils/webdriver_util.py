@@ -148,5 +148,5 @@ def init_webdriver(
             driver = create_chrome_driver(**kwargs)
         case "firefox":
             driver = create_firefox_driver(**kwargs)
-    setattr(builtins, "dict_driver", {browser: driver})
+    builtins.dict_driver[browser] = driver
     return driver

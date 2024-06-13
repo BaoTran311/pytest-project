@@ -3,7 +3,6 @@ import json
 import logging
 import time
 from contextlib import suppress
-from datetime import datetime
 from json import JSONDecodeError
 from pathlib import Path
 
@@ -28,12 +27,15 @@ def pytest_addoption(parser):
     support.addoption("--password", action="store", default="", help="Support generate password")
 
     project = parser.getgroup("Projects")
-    # project.addoption("--browser", action="store")
+    project.addoption("--browser", action="store")
     project.addoption("--headless", action="store_true", default=False)
+    parser.addoption("--no_reset", action="store_true", default=False)
 
 
 def pytest_sessionstart(session):
     create_handler_logger(logging.INFO)
+    setattr(builtins, "dict_driver", dict())
+    setattr(builtins, "appium_services", list())
 
     logger.info("=== Start Pytest session ===")
     runtime_option = vars(session.config.option)
@@ -60,8 +62,6 @@ def pytest_runtest_logreport(report):
             printlog, status = (logger.info, "PASSED")
         elif report.failed:
             printlog, status = (logger.warning, "FAILED")
-            # screenshot if test case failed ==> TBD
-
         printlog("-------------")  # noqa
         printlog(f"Test case   | {test_case_name}")
         printlog(f"Test status | {status} ({datetime_util.pretty_time(report.duration)})")
@@ -113,13 +113,12 @@ def pytest_runtest_makereport(item, call):
 
         # Log test to allure reports
         for steps in test_steps:
-            step = steps.pop(0)
-            with allure.step(step):
+            with allure.step(steps.pop(0)):
                 for verify in steps:
                     with allure.step(verify):
                         if report.failed:
                             for platform, driver in getattr(builtins, "dict_driver").items():
-                                attach_name = f"{platform}_{datetime.now()}.png"
+                                attach_name = f"{platform}_{datetime_util.get_current_time(time_format="%d-%Y-%m_%H:%M:%S")}.png"
                                 allure.attach(
                                     name=attach_name, body=driver.get_screenshot_as_png(),
                                     attachment_type=allure.attachment_type.PNG,
@@ -148,6 +147,11 @@ def pytest_sessionfinish(session):
         time.sleep(2)  # Calm down for clean up data,
         for _, driver in getattr(builtins, "dict_driver").items():
             driver.quit()
+
+    if hasattr(builtins, "appium_services"):
+        time.sleep(2)  # Calm down for clean up data,
+        for service in builtins.appium_services:
+            service.stop()
 
     allure_result_dir = session.config.option.allure_report_dir
     if not allure_result_dir:

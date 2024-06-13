@@ -3,7 +3,7 @@ from src.page_object.home import HomePage
 from src.page_object.login import LoginPage
 
 
-class PageContainer:
+class WebContainer:
 
     def __init__(self, driver):
         self._driver = driver
