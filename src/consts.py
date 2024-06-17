@@ -5,6 +5,10 @@ PROJECT_ROOT = Path(__file__).parent.parent
 LOG_DIR = PROJECT_ROOT / "logs"
 SCREENSHOT_DIR = PROJECT_ROOT / "screenshots"
 
+# Element timeout
+TIMEOUT = 10
+DISPLAY_TIMEOUT = 3
+
 # General config
 PYTHON_CONFIG = "pythonConfig"
 

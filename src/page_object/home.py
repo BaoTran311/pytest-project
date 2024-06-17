@@ -9,5 +9,14 @@ class HomePage(GeneralPage):
 
     __ic_account = (By.XPATH, "//i[contains(@class, 'icon avatar') and ./ancestor::tooltip]")
 
-    def verify_homepage_displays(self):
-        assert self.actions.is_displayed(self.__ic_account)
+    def wait_for_homepage_displayed(self):
+        self.actions.wait_for_element_visible(self.__ic_account)
+
+    def is_homepage_displays(self):
+        return self.actions.is_displayed(self.__ic_account)
+
+    def is_fail(self):
+        return False
+
+    def is_pass(self):
+        return True

@@ -9,13 +9,12 @@ from selenium.webdriver.support import expected_conditions as exc
 from selenium.webdriver.support.wait import WebDriverWait
 
 from src import consts
+from src.consts import TIMEOUT, DISPLAY_TIMEOUT
 
 _logger = logging.getLogger(consts.PYTHON_CONFIG)
 
 
 class ActionsElement:
-    TIMEOUT = 10
-    DISPLAY_TIMEOUT = 3
 
     def __init__(self, driver):
         self.__driver = driver

@@ -1,7 +1,7 @@
 from src.utils import appium_util
 
 
-class iPhoneContainer:
+class _iPhoneContainer:
 
     def __init__(self):
         ...
@@ -11,3 +11,6 @@ class iPhoneContainer:
         self.__setattr__("_driver", driver)
         return self
 
+
+class MobileContainer:
+    iphone_container = _iPhoneContainer

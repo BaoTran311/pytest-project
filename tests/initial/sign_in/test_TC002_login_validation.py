@@ -2,12 +2,13 @@ from src.data_runtime import DataRuntime
 from src.utils import logger
 
 
-def test_login_validation(page):
+def test(flo_web, verify):
     logger.info("Step 1: Navigate to flo web")
-    page.navigate_to_flo_web()
+    flo_web.navigate_to_flo_web()
 
     logger.info("Step 2: Login with valid account")
-    page.login_page.login(DataRuntime.config.user, DataRuntime.config.password)
+    flo_web.login_page.login(DataRuntime.config.user, DataRuntime.config.password)
+    flo_web.home_page.wait_for_homepage_displayed()
 
-    logger.info("Verify user login successfully")
-    page.home_page.verify_homepage_displays()
+    verify(flo_web.home_page.is_fail(), "Verify fail")
+    verify(flo_web.home_page.is_homepage_displays(), "Verify user login successfully")
