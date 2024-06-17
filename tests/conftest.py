@@ -9,7 +9,6 @@ from pathlib import Path
 import allure
 import pytest
 import yaml
-from pytest_check import check
 
 from src import consts
 from src.data_runtime import DataRuntime
@@ -38,6 +37,7 @@ def pytest_sessionstart(session):
     create_handler_logger(logging.INFO)
     setattr(builtins, "dict_driver", dict())
     setattr(builtins, "appium_services", list())
+    setattr(builtins, "fail_check_point", dict())
 
     logger.info("=== Start Pytest session ===")
     runtime_option = vars(session.config.option)
@@ -57,6 +57,37 @@ def pytest_sessionstart(session):
         create_handler_logger(logging.DEBUG)
 
 
+@pytest.hookimpl(tryfirst=True)
+def pytest_runtest_setup(item: pytest.Item):
+    print("\x00")
+    raw_tc_name = item.parent.name.split("_")[1:]
+    tc_name = f"{raw_tc_name[0]} - {" ".join(raw_tc_name[1:]).capitalize().replace(".py", "")}"
+    parent_suite, *test_suite = item.parent.module.__name__.split(".")[1:-1]  # noqa
+    DataRuntime.tc_info = dotdict(name=tc_name, test_suite=test_suite, parent_suite=parent_suite)
+
+    global _fail_check_point
+    builtins.fail_check_point[tc_name] = []  # noqa
+
+
+def pytest_runtest_call(item):  # Before each test case
+    # print("\x00")  # print a non-printable character to break a new line on console
+    ...
+
+
+def pytest_runtest_teardown(item):  # After each test case
+    # print("\x00")  # print a non-printable character to break a new line on console
+    tc_name, test_suite, parent_suite = [item for item in DataRuntime.tc_info.values()]  # noqa
+    allure.dynamic.parent_suite(parent_suite.capitalize())
+    if test_suite:
+        allure.dynamic.suite(test_suite[-1].capitalize().replace("_", " "))
+    allure.dynamic.title(tc_name)
+
+    global _fail_check_point
+
+    if not builtins.fail_check_point[tc_name]:  # noqa
+        del builtins.fail_check_point[tc_name]  # noqa
+
+
 def pytest_runtest_logreport(report):
     if report.when == "call":
         test_case_name = report.nodeid.split("/")[-1].split(".")[0]
@@ -66,7 +97,7 @@ def pytest_runtest_logreport(report):
             printlog, status = (logger.warning, "FAILED")
         printlog("-------------")  # noqa
         printlog(f"Test case   | {test_case_name}")
-        printlog(f"Test status | {status} ({datetime_util.pretty_time(report.duration)})")
+        printlog(f"Test status | {status} ({datetime_util.pretty_time(report.duration)})")  # noqa
         printlog("-------------")
 
 
@@ -134,8 +165,11 @@ def pytest_sessionfinish(session):
     logger.info("=== End tests session ===")
     logger.info("‣ Quit driver session")
 
+    if vars(session.config.option)["collectonly"]:
+        return
+
     global _fail_check_point
-    _fail_tcs_name = [name for name in _fail_check_point.keys()]
+    _fail_tcs_name = [name for name in builtins.fail_check_point.keys()]  # noqa
 
     if hasattr(builtins, "dict_driver"):
         time.sleep(2)  # Calm down for clean up data,
@@ -171,22 +205,16 @@ def pytest_sessionfinish(session):
                 for _sub_steps in steps:
                     sub_steps = _sub_steps.get("steps", "")
                     for sub_step in sub_steps:
-                        # if "verify" in sub_step['name'].lower() and \
-                        #         sub_step['name'] in _fail_check_point[json_obj['name']]:
-                        #     sub_step["status"] = "failed"
-                        #     _sub_steps["status"] = "failed"
-
-                        if sub_step['name'] in _fail_check_point[json_obj['name']]:
+                        if sub_step['name'] in builtins.fail_check_point[json_obj['name']]:  # noqa
                             sub_step["status"] = "failed"
                             _sub_steps["status"] = "failed"
 
                         if json_obj['name'] in _fail_tcs_name and \
-                                sub_step['name'] not in _fail_check_point[json_obj['name']]:
+                                sub_step['name'] not in builtins.fail_check_point[json_obj['name']]:  # noqa
                             del sub_step['attachments']
 
                 # labels - allure report
                 # Present, cook (value, name in parentSuite and Suite)
-                #
                 raw_labels = json_obj["labels"]
                 json_obj["labels"] = [
                     _label for _label in raw_labels
@@ -201,44 +229,3 @@ def pytest_sessionfinish(session):
                 # Write the modified json object
                 with result_file.open("w") as _f:
                     json.dump(json_obj, _f)
-
-
-@pytest.fixture(scope="session")
-def verify():
-    def handler(result, msg):
-        global _fail_check_point
-        logger.info(msg)
-        if not result:
-            _fail_check_point[DataRuntime.tc_info.name].append(msg)
-        with check:
-            assert result
-
-    return handler
-
-
-@pytest.hookimpl(tryfirst=True)
-def pytest_runtest_setup(item: pytest.Item):
-    print("\x00")
-    raw_tc_name = item.parent.name.split("_")[1:]
-    tc_name = f"{raw_tc_name[0]} - {" ".join(raw_tc_name[1:]).capitalize().replace(".py", "")}"
-    parent_suite, *test_suite = item.parent.module.__name__.split(".")[1:-1]
-    DataRuntime.tc_info = dotdict(name=tc_name, test_suite=test_suite, parent_suite=parent_suite)
-
-    global _fail_check_point
-    _fail_check_point[tc_name] = []
-
-
-def pytest_runtest_teardown(item):  # After each test case
-    # print("\x00")  # print a non-printable character to break a new line on console
-    tc_name, test_suite, parent_suite = [item for item in DataRuntime.tc_info.values()]
-    allure.dynamic.parent_suite(parent_suite.capitalize())
-    if test_suite:
-        allure.dynamic.suite(test_suite[-1].capitalize().replace("_", " "))
-    allure.dynamic.title(tc_name)
-
-    global _fail_check_point
-    if not _fail_check_point[tc_name]:
-        del _fail_check_point[tc_name]
-
-# def pytest_runtest_call(item):  # Before each test case
-# print("\x00")  # print a non-printable character to break a new line on console

@@ -22,5 +22,5 @@ class LoginPage(GeneralPage):
     def get_error_text(self):
         return self.actions.get_text(self.__txt_error)
 
-    def verify_error_text_is_displayed_with_correct_content(self, content):
-        assert self.get_error_text() == content
+    def is_error_text_is_displayed_with_correct_content(self, content):
+        return self.get_error_text() == content

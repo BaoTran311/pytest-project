@@ -2,6 +2,7 @@ import pytest
 
 from src.data_runtime import DataRuntime
 from src.utils import logger
+from src.utils.assert_util import verify
 
 
 @pytest.mark.parametrize("invalid_field", ("username", "password"))
@@ -14,6 +15,8 @@ def test(flo_web, invalid_field):
     credential[1 if invalid_field == "username" else 0] = "asdf"
     flo_web.login_page.login(*credential)
 
-    expected_msg = "Incorrect password/username. Please try again"
-    logger.info(f"Verify error text '{expected_msg!r}' displays")
-    flo_web.login_page.verify_error_text_is_displayed_with_correct_content(expected_msg)
+    expected_msg = "Incorrect password/username. Please try again."
+    verify(
+        flo_web.login_page.is_error_text_is_displayed_with_correct_content(expected_msg),
+        f"Verify error text '{expected_msg!r}' displays"
+    )
