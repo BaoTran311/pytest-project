@@ -46,7 +46,7 @@ def pytest_sessionstart(session):
         return
 
     logger.info("Loading config and handle ...")
-    path = consts.PROJECT_ROOT / "config" / f"{runtime_option['env']}.yaml"
+    path = consts.ENV_DIR / f"{runtime_option['env']}.yaml"
     with open(path, "r") as _env:
         DataRuntime.config = dotdict(yaml.load(_env, Loader=yaml.FullLoader))
     DataRuntime.runtime_option = dotdict(runtime_option)
@@ -146,16 +146,19 @@ def pytest_runtest_makereport(item, call):
 
         # Log test to allure reports
         for steps in test_steps:
-            with allure.step(steps.pop(0)):
-                for index, verify in enumerate(steps):
+            with (allure.step(steps.pop(0))):
+                for verify in steps:
                     with allure.step(verify):
                         if report.failed:
-                            for platform, driver in getattr(builtins, "dict_driver").items():
-                                attach_name = f"{platform}_{datetime_util.get_current_time(time_format="%d-%Y-%m_%H:%M:%S")}.png"
-                                allure.attach(
-                                    name=attach_name, body=driver.get_screenshot_as_png(),
-                                    attachment_type=allure.attachment_type.PNG,
-                                )
+                            fail_check_points = builtins.fail_check_point.get(DataRuntime.tc_info.name, [])
+                            for item in fail_check_points:
+                                if verify in item:
+                                    screenshot = item[verify]
+                                    allure.attach(
+                                        name=screenshot[0],
+                                        body=screenshot.pop(-1),
+                                        attachment_type=allure.attachment_type.PNG,
+                                    )
 
         del _msg_logs[:]
 
@@ -205,13 +208,16 @@ def pytest_sessionfinish(session):
                 for _sub_steps in steps:
                     sub_steps = _sub_steps.get("steps", "")
                     for sub_step in sub_steps:
-                        if sub_step['name'] in builtins.fail_check_point[json_obj['name']]:  # noqa
+                        # if sub_step['name'] in builtins.fail_check_point[json_obj['name']]:  # noqa
+                        if sub_step['name'] in [list(entry.keys())[0] for entry in
+                                                builtins.fail_check_point[json_obj['name']]]:  # noqa
                             sub_step["status"] = "failed"
                             _sub_steps["status"] = "failed"
 
-                        if json_obj['name'] in _fail_tcs_name and \
-                                sub_step['name'] not in builtins.fail_check_point[json_obj['name']]:  # noqa
-                            del sub_step['attachments']
+                        # pytest.set_trace()
+                        # if json_obj['name'] in _fail_tcs_name and \
+                        #         sub_step['name'] in builtins.fail_check_point[json_obj['name']]:  # noqa
+                        #     del sub_step['attachments']
 
                 # labels - allure report
                 # Present, cook (value, name in parentSuite and Suite)

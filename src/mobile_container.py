@@ -1,7 +1,7 @@
 from src.utils import appium_util
 
 
-class _iPhoneContainer:
+class _iPhone:
 
     def __init__(self):
         ...
@@ -12,5 +12,5 @@ class _iPhoneContainer:
         return self
 
 
-class MobileContainer:
-    iphone_container = _iPhoneContainer
+class Mobile:
+    iphone_container = _iPhone

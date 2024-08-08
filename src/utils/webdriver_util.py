@@ -142,7 +142,6 @@ def init_webdriver(
     kwargs = dict(headless=headless, full_screen=full_screen, extension=extension, user_profile=user_profile)
     browser = DataRuntime.config.platforms.web.browser
     logger.info(f"Starting {browser} webdriver ...")
-    print("\x00")
     match browser:
         case "chrome":
             driver = create_chrome_driver(**kwargs)

@@ -4,6 +4,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent
 LOG_DIR = PROJECT_ROOT / "logs"
 SCREENSHOT_DIR = PROJECT_ROOT / "screenshots"
+ENV_DIR = PROJECT_ROOT / "config"
 
 # Element timeout
 TIMEOUT = 10

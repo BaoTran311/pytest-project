@@ -18,7 +18,7 @@ def start_appium_server(server_port=4723, webdriver_agent_port=8100, platform=No
     os.system(f"lsof -ti tcp:{server_port} | xargs kill")  # kill the listening port
     appium_service = AppiumService()
     args = [
-        "-pa", "/",
+        "-pa", "/wd/hub",
         "--port", str(server_port),
         "--driver-xcuitest-webdriveragent-port", str(webdriver_agent_port),
         "--log", str(PROJECT_ROOT) + f"/_logs/{server_port}_{platform}.log"
@@ -46,18 +46,8 @@ def create_ios_driver(device_uid: str, bundle_id: str, appium_server_port=4723, 
     options.command_timeouts = 20000
     options.new_command_timeout = 0  # Setting it to zero disables the timer.
     options.no_reset = DataRuntime.runtime_option.no_reset
-
-    # Simulator only (https://github.com/wix/AppleSimulatorUtils)
-    permissions = {
-        bundle_id: {
-            "notifications": "NO",
-            "siri": "NO",
-            "photos": "YES",
-            "camera": "YES",
-            "location": "always"
-        }
-    }
-    # options.permissions = permissions
+    if DataRuntime.config.platforms.get("ipad", None):
+        options.orientation = "LANDSCAPE"
 
     try:
         return webdriver.Remote(f"{DEFAULT_HOST}:{appium_server_port}", options=options)
@@ -99,7 +89,7 @@ def init_appium_server(platform):
     return service
 
 
-def init_appium_driver(platform=None):
+def init_appium_driver(platform):
     logger.info(f"Starting {platform} appium driver ...")
     match platform.lower():
         case "iphone" | "ipad":
@@ -107,6 +97,5 @@ def init_appium_driver(platform=None):
         case "mac":
             driver = create_mac_driver(**DataRuntime.config.platforms.mac)
 
-    print("\x00")
     builtins.dict_driver[platform] = driver
     return driver

@@ -1,18 +1,18 @@
 import pytest
 
 from src.data_runtime import DataRuntime
-from src.web_container import WebContainer
-from src.mobile_container import MobileContainer
+from src.web_container import Web
+from src.mobile_container import Mobile
 from src.utils import webdriver_util, appium_util
 
 
 @pytest.fixture(scope="package", autouse=False)
-def flo_web():
+def web():
     driver = webdriver_util.init_webdriver(headless=DataRuntime.runtime_option.headless)
-    return WebContainer(driver)
+    return Web(driver)
 
 
 @pytest.fixture(scope="package", autouse=False)
-def flo_iphone():
+def iphone():
     appium_util.init_appium_server("iPhone")
-    return MobileContainer.iphone_container()
+    return Mobile.iphone_container()

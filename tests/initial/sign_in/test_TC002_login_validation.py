@@ -3,12 +3,20 @@ from src.utils import logger
 from src.utils.assert_util import verify
 
 
-def test(flo_web, flo_iphone):
+def test(web):
     logger.info("Step 1: Navigate to flo web")
-    flo_web.navigate_to_flo_web()
+    web.navigate_to_flo_web()
 
-    logger.info("Step 2: Login with valid account")
-    flo_web.login_page.login(DataRuntime.config.user, DataRuntime.config.password)
-    flo_web.home_page.wait_for_homepage_displayed()
+    logger.info("Step 2: Login with invalid account")
+    web.login_page.login("asdf", "asdf")
+    expected_msg = "Incorrect password/username. Please try again"
+    verify(
+        web.login_page.is_error_text_is_displayed_with_correct_content(expected_msg),
+        f"Verify error text '{expected_msg!r}' displays"
+    )
 
-    verify(flo_web.home_page.is_homepage_displays(), "Verify user login successfully")
+    logger.info("Step 3: Login with valid account")
+    web.login_page.refresh()
+    web.login_page.login(DataRuntime.config.user, DataRuntime.config.password)
+    web.top_navigation.wait_for_top_navigation_displayed()
+    verify(web.top_navigation.wait_for_top_navigation_displayed() is False, "Verify user login successfully")

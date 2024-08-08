@@ -1,7 +1,7 @@
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 
-from src.page_object.general import GeneralPage
+from src.apps.web.page.general import GeneralPage
 
 
 class LoginPage(GeneralPage):

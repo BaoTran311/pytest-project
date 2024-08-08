@@ -14,13 +14,12 @@ from src.consts import TIMEOUT, DISPLAY_TIMEOUT
 _logger = logging.getLogger(consts.PYTHON_CONFIG)
 
 
-class ActionsElement:
-
+class Actions:
     def __init__(self, driver):
-        self.__driver = driver
+        self._driver = driver
 
     def __wait_for_element__(self, element: tuple, /, *, func=None, timeout=TIMEOUT):
-        webdriver_wait = WebDriverWait(self.__driver, timeout)
+        webdriver_wait = WebDriverWait(self._driver, timeout)
         return webdriver_wait.until(func(element))
 
     wait_for_element_visible = functools.partialmethod(__wait_for_element__, func=exc.visibility_of_element_located)
@@ -36,23 +35,12 @@ class ActionsElement:
                 if visible:
                     return self.wait_for_element_visible(element, timeout=timeout)
                 return self.wait_for_element_presence(element, timeout=timeout)
-            return self.__driver.find_element(*element)
+            return self._driver.find_element(*element)
 
         msg_log = f"Element not found with locator {element[1]!r} after {timeout!r} seconds"
         if show_log:
             _logger.error(msg_log)
         raise NoSuchElementException(msg_log)
-
-    def click(
-            self, element: tuple, /,
-            *,
-            timeout=TIMEOUT,
-            show_log=True,
-            visible=True,
-    ):
-        self.wait_for_element_clickable(element, timeout=timeout)
-        ele = self.find_element(element, timeout=timeout, show_log=show_log, visible=visible)
-        ele.click()
 
     def clear_text(self, element: tuple, /, visible=False, timeout=TIMEOUT):
         self.find_element(element, visible=visible, timeout=timeout).clear()
@@ -81,12 +69,34 @@ class ActionsElement:
         except NoSuchElementException:
             return ""
 
-    def scroll_to_view_by_js(self, x=0, y: str | int = "window.innerHeight"):
-        self.__driver.execute_script(f"window.scrollBy({x}, {y});")
-
     def is_displayed(self, element: tuple, /,
                      *, timeout=DISPLAY_TIMEOUT, show_log=False):
         try:
             return self.find_element(element, timeout=timeout, show_log=show_log).is_displayed()
         except NoSuchElementException:
             return False
+
+
+class WebActions(Actions):
+
+    def __init__(self, driver):
+        super().__init__(driver)
+
+    def click(
+            self, element: tuple, /,
+            *,
+            timeout=TIMEOUT,
+            show_log=True,
+            visible=True,
+    ):
+        self.wait_for_element_clickable(element, timeout=timeout)
+        ele = self.find_element(element, timeout=timeout, show_log=show_log, visible=visible)
+        ele.click()
+
+    def scroll_to_view_by_js(self, x=0, y: str | int = "window.innerHeight"):
+        self.__driver.execute_script(f"window.scrollBy({x}, {y});")
+
+
+class MobileActions(Actions):
+    def __init__(self, driver):
+        super().__init__(driver)
