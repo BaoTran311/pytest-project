@@ -3,7 +3,7 @@ import logging
 from contextlib import suppress
 
 from selenium.common import NoSuchElementException, TimeoutException
-from selenium.webdriver import Keys
+from selenium.webdriver import Keys, ActionChains
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as exc
 from selenium.webdriver.support.wait import WebDriverWait
@@ -17,6 +17,7 @@ _logger = logging.getLogger(consts.PYTHON_CONFIG)
 class Actions:
     def __init__(self, driver):
         self._driver = driver
+        self._action_chains = ActionChains(self._driver)
 
     def __wait_for_element__(self, element: tuple, /, *, func=None, timeout=TIMEOUT):
         webdriver_wait = WebDriverWait(self._driver, timeout)
@@ -41,6 +42,14 @@ class Actions:
         if show_log:
             _logger.error(msg_log)
         raise NoSuchElementException(msg_log)
+
+    def click(
+            self, element: tuple, /,
+            *, timeout=TIMEOUT, visible=True, show_log=True
+    ):
+        self.wait_for_element_clickable(element, timeout=timeout)
+        ele = self.find_element(element, timeout=timeout, show_log=show_log, visible=visible)
+        ele.click()
 
     def clear_text(self, element: tuple, /, visible=False, timeout=TIMEOUT):
         self.find_element(element, visible=visible, timeout=timeout).clear()
@@ -74,7 +83,15 @@ class Actions:
         try:
             return self.find_element(element, timeout=timeout, show_log=show_log).is_displayed()
         except NoSuchElementException:
-            return False
+            return ""
+
+    def get_attribute(self, element: tuple, attribute="", /,
+                      *, timeout=TIMEOUT, show_log=False):
+        try:
+            ele = self.find_element(element, timeout=timeout, show_log=show_log)
+            return ele.get_attribute(attribute)
+        except NoSuchElementException:
+            return ""
 
 
 class WebActions(Actions):
@@ -93,8 +110,20 @@ class WebActions(Actions):
         ele = self.find_element(element, timeout=timeout, show_log=show_log, visible=visible)
         ele.click()
 
+    def click_by_js(self, element: tuple, /, ):
+        self._driver.execute_script("arguments[0].click();", self.find_element(element, visible=False))
+
     def scroll_to_view_by_js(self, x=0, y: str | int = "window.innerHeight"):
-        self.__driver.execute_script(f"window.scrollBy({x}, {y});")
+        self._driver.execute_script(f"window.scrollBy({x}, {y});")
+
+    def hover(self, element: tuple, /, *, pause=2):
+        self._action_chains.move_to_element(self.find_element(element)).pause(pause).perform()
+
+    def double_click(self, element: tuple, /):
+        self._action_chains.double_click(self.find_element(element)).perform()
+
+    def right_click(self, element: tuple, /):
+        self._action_chains.context_click(self.find_element(element)).perform()
 
 
 class MobileActions(Actions):

@@ -128,6 +128,15 @@ def pytest_runtest_makereport(item, call):
     global _msg_logs
 
     report = (yield).get_result()
+
+    if report.when == 'setup' and report.failed:
+        for platform, driver in getattr(builtins, "dict_driver").items():
+            attach_name = f"setup_{platform}_{datetime_util.get_current_time(time_format="%d-%Y-%m_%H:%M:%S")}.png"
+            allure.attach(
+                name=attach_name,
+                body=driver.get_screenshot_as_png(),
+                attachment_type=allure.attachment_type.PNG
+            )
     if report.when == "call":
         test_steps = []
 
@@ -144,13 +153,22 @@ def pytest_runtest_makereport(item, call):
                 break
             test_steps.append(_msg_logs[steps_index[i]: steps_index[i + 1]])
 
+        fail_check_points = builtins.fail_check_point.get(DataRuntime.tc_info.name, [])
+        if not fail_check_points and report.failed:
+            for platform, driver in getattr(builtins, "dict_driver").items():
+                attach_name = f"{platform}_{datetime_util.get_current_time(time_format="%d-%Y-%m_%H:%M:%S")}.png"
+                allure.attach(
+                    name=attach_name,
+                    body=driver.get_screenshot_as_png(),
+                    attachment_type=allure.attachment_type.PNG
+                )
+
         # Log test to allure reports
         for steps in test_steps:
             with (allure.step(steps.pop(0))):
                 for verify in steps:
                     with allure.step(verify):
                         if report.failed:
-                            fail_check_points = builtins.fail_check_point.get(DataRuntime.tc_info.name, [])
                             for item in fail_check_points:
                                 if verify in item:
                                     screenshot = item[verify]
@@ -161,6 +179,15 @@ def pytest_runtest_makereport(item, call):
                                     )
 
         del _msg_logs[:]
+
+    if report.when == 'teardown' and report.failed:
+        for platform, driver in getattr(builtins, "dict_driver").items():
+            attach_name = f"teardown_{platform}_{datetime_util.get_current_time(time_format="%d-%Y-%m_%H:%M:%S")}.png"
+            allure.attach(
+                name=attach_name,
+                body=driver.get_screenshot_as_png(),
+                attachment_type=allure.attachment_type.PNG
+            )
 
 
 def pytest_sessionfinish(session):

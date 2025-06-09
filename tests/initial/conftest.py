@@ -1,9 +1,9 @@
 import pytest
 
 from src.data_runtime import DataRuntime
-from src.web_container import Web
 from src.mobile_container import Mobile
 from src.utils import webdriver_util, appium_util
+from src.web_container import Web
 
 
 @pytest.fixture(scope="package", autouse=False)
@@ -16,3 +16,17 @@ def web():
 def iphone():
     appium_util.init_appium_server("iPhone")
     return Mobile.iphone_container()
+
+
+@pytest.fixture(scope="package", autouse=False)
+def ipad():
+    appium_util.init_appium_server("iPad")
+    return Mobile.iphone_container()
+
+
+@pytest.fixture(scope="package", autouse=False)
+def mac():
+    appium_util.init_appium_server("Mac")
+    return Mobile.iphone_container()
+
+

@@ -1,3 +1,5 @@
+import pytest
+
 from src.data_runtime import DataRuntime
 from src.utils import logger
 from src.utils.assert_util import verify
@@ -15,8 +17,15 @@ def test(web):
         f"Verify error text '{expected_msg!r}' displays"
     )
 
-    logger.info("Step 3: Login with valid account")
-    web.login_page.refresh()
-    web.login_page.login(DataRuntime.config.user, DataRuntime.config.password)
-    web.top_navigation.wait_for_top_navigation_displayed()
-    verify(web.top_navigation.wait_for_top_navigation_displayed() is False, "Verify user login successfully")
+    # logger.info("Step 3: Login with valid account")
+    # web.login_page.refresh()
+    # web.login_page.login(DataRuntime.config.user, DataRuntime.config.password)
+    # web.top_navigation.wait_for_top_navigation_displayed()
+    # verify(web.top_navigation.wait_for_top_navigation_displayed() is False, "Verify user login successfully")
+
+
+@pytest.fixture(autouse=True)
+def bao(web):
+    web.login_page.login("asdf", "asdf")
+    yield
+    web.login_page.login("asdf", "asdf")

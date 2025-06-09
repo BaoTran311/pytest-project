@@ -13,3 +13,6 @@ class Web:
     def navigate_to_flo_web(self):
         self._driver.get(DataRuntime.config.platforms.web.url)
         return self.login_page
+
+    def refresh_page(self):
+        self._driver.refresh()

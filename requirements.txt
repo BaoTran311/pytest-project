@@ -1,6 +1,6 @@
 Appium-Python-Client==2.11.1
 selenium==4.11.2
-webdriver_manager
+webdriver_manager==4.0.2
 pytest
 colorlog
 allure-pytest

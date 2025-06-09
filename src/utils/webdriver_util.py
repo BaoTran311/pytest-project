@@ -3,6 +3,7 @@ import fileinput
 import logging
 import platform
 
+import pytest
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.webdriver import WebDriver
@@ -147,5 +148,6 @@ def init_webdriver(
             driver = create_chrome_driver(**kwargs)
         case "firefox":
             driver = create_firefox_driver(**kwargs)
+    pytest.set_trace()
     builtins.dict_driver[browser] = driver
     return driver
