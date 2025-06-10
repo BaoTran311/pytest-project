@@ -1,6 +1,8 @@
 import builtins
 import json
 import logging
+import os
+import subprocess
 import time
 from contextlib import suppress
 from json import JSONDecodeError
@@ -11,11 +13,13 @@ import pytest
 import yaml
 
 from src import consts
+from src.consts import PROJECT_ROOT
 from src.data_runtime import DataRuntime
 from src.utils import logger, create_handler_logger, dotdict, string_util, file_util, datetime_util
 
 _msg_logs = []
 _fail_check_point = dict()
+VIDEO_NAME = f"{PROJECT_ROOT}/video.mp4"
 
 
 def pytest_addoption(parser):
@@ -26,6 +30,7 @@ def pytest_addoption(parser):
     support = parser.getgroup("Support")
     support.addoption("--user", action="store", default="", help="Support change user")
     support.addoption("--password", action="store", default="", help="Support generate password")
+    support.addoption("--record", action="store_true", default=False, help="Support recording test running")
 
     project = parser.getgroup("Projects")
     project.addoption("--browser", action="store")
@@ -123,9 +128,39 @@ def auto_allure_logging():
     logging.Logger.info = patchinfo(logging.Logger.info)
 
 
+@pytest.fixture(scope="function", autouse=True)
+def record_video():
+    if DataRuntime.runtime_option.record:
+        global VIDEO_NAME
+        if os.path.exists(VIDEO_NAME):
+            file_util.delete_file(VIDEO_NAME)
+
+        ffmpeg_cmd = [
+            "ffmpeg",
+            "-y",  # Overwrite existing file
+            "-f", "avfoundation",  # macOS screen capture input
+            "-framerate", "15",
+            "-i", "1:none",  # Screen index 1, no audio
+            "-preset", "ultrafast",
+            VIDEO_NAME
+        ]
+        time.sleep(2)  # Let FFmpeg warm up
+
+        logger.debug("[Recording started]")
+        process = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        time.sleep(2)  # Let FFmpeg warm up
+
+    yield  # <-- Your test runs here
+    if DataRuntime.runtime_option.record:
+        logger.debug("[Stopping recording]")
+        process.terminate()
+        process.communicate()
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
-    global _msg_logs
+    global _msg_logs, VIDEO_NAME
 
     report = (yield).get_result()
 
@@ -180,14 +215,23 @@ def pytest_runtest_makereport(item, call):
 
         del _msg_logs[:]
 
-    if report.when == 'teardown' and report.failed:
-        for platform, driver in getattr(builtins, "dict_driver").items():
-            attach_name = f"teardown_{platform}_{datetime_util.get_current_time(time_format="%d-%Y-%m_%H:%M:%S")}.png"
-            allure.attach(
-                name=attach_name,
-                body=driver.get_screenshot_as_png(),
-                attachment_type=allure.attachment_type.PNG
-            )
+    if report.when == 'teardown':
+        if not os.path.exists(VIDEO_NAME):
+            logger.debug("ℹ️ Run with non-record.")
+        else:
+            logger.debug(f"🎥 Video saved: {VIDEO_NAME}")
+            # Attach to Allure
+            with open(VIDEO_NAME, "rb") as f:
+                allure.attach(body=f.read(), name="Test Recording", attachment_type=allure.attachment_type.MP4)
+            file_util.delete_file(VIDEO_NAME)
+        if report.failed:
+            for platform, driver in getattr(builtins, "dict_driver").items():
+                attach_name = f"teardown_{platform}_{datetime_util.get_current_time(time_format="%d-%Y-%m_%H:%M:%S")}.png"
+                allure.attach(
+                    name=attach_name,
+                    body=driver.get_screenshot_as_png(),
+                    attachment_type=allure.attachment_type.PNG
+                )
 
 
 def pytest_sessionfinish(session):
