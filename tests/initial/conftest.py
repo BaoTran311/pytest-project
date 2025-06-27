@@ -6,10 +6,11 @@ from src.utils import webdriver_util, appium_util
 from src.web_container import Web
 
 
-@pytest.fixture(scope="package", autouse=False)
+@pytest.fixture(scope="module", autouse=False)
 def web():
     driver = webdriver_util.init_webdriver(headless=DataRuntime.runtime_option.headless)
-    return Web(driver)
+    yield Web(driver)
+    driver.quit()
 
 
 @pytest.fixture(scope="package", autouse=False)
@@ -28,5 +29,3 @@ def ipad():
 def mac():
     appium_util.init_appium_server("Mac")
     return Mobile.iphone_container()
-
-

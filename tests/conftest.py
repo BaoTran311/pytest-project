@@ -2,6 +2,7 @@ import builtins
 import json
 import logging
 import os
+import re
 import subprocess
 import time
 from contextlib import suppress
@@ -61,14 +62,17 @@ def pytest_sessionstart(session):
     if runtime_option["debuglog"]:
         create_handler_logger(logging.DEBUG)
 
+    if runtime_option['browser']:
+        DataRuntime.config.platforms.web.browser = runtime_option['browser']
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_runtest_setup(item: pytest.Item):
     print("\x00")
     raw_tc_name = item.parent.name.split("_")[1:]
-    tc_name = f"{raw_tc_name[0]} - {" ".join(raw_tc_name[1:]).capitalize().replace(".py", "")}"
+    tc_name = raw_tc_name[0].replace(".py", "")
     parent_suite, *test_suite = item.parent.module.__name__.split(".")[1:-1]  # noqa
     DataRuntime.tc_info = dotdict(name=tc_name, test_suite=test_suite, parent_suite=parent_suite)
+    allure.dynamic.testcase(re.sub(r"\bTC(\d+)\b", r"TC-\1", tc_name.upper()), tc_name)
 
     global _fail_check_point
     builtins.fail_check_point[tc_name] = []  # noqa
@@ -96,13 +100,11 @@ def pytest_runtest_teardown(item):  # After each test case
 def pytest_runtest_logreport(report):
     if report.when == "call":
         test_case_name = report.nodeid.split("/")[-1].split(".")[0]
-        if report.passed:
-            printlog, status = (logger.info, "PASSED")
-        elif report.failed:
-            printlog, status = (logger.warning, "FAILED")
+        status = report.outcome
+        printlog = logger.info if status == "passed" else logger.warning
         printlog("-------------")  # noqa
         printlog(f"Test case   | {test_case_name}")
-        printlog(f"Test status | {status} ({datetime_util.pretty_time(report.duration)})")  # noqa
+        printlog(f"Test status | {status.upper()} ({datetime_util.pretty_time(report.duration)})")  # noqa
         printlog("-------------")
 
 
@@ -130,7 +132,7 @@ def auto_allure_logging():
 
 @pytest.fixture(scope="function", autouse=True)
 def record_video():
-    if DataRuntime.runtime_option.record:
+    if DataRuntime.runtime_option.record and not DataRuntime.runtime_option.headless:
         global VIDEO_NAME
         if os.path.exists(VIDEO_NAME):
             file_util.delete_file(VIDEO_NAME)
@@ -152,7 +154,7 @@ def record_video():
         time.sleep(2)  # Let FFmpeg warm up
 
     yield  # <-- Your test runs here
-    if DataRuntime.runtime_option.record:
+    if DataRuntime.runtime_option.record and not DataRuntime.runtime_option.headless:
         logger.debug("[Stopping recording]")
         process.terminate()
         process.communicate()
@@ -166,7 +168,7 @@ def pytest_runtest_makereport(item, call):
 
     if report.when == 'setup' and report.failed:
         for platform, driver in getattr(builtins, "dict_driver").items():
-            attach_name = f"setup_{platform}_{datetime_util.get_current_time(time_format="%d-%Y-%m_%H:%M:%S")}.png"
+            attach_name = f"setup_{platform}_{datetime_util.get_current_time(time_format="%d-%m-%Y_%H:%M:%S")}.png"
             allure.attach(
                 name=attach_name,
                 body=driver.get_screenshot_as_png(),
@@ -191,7 +193,7 @@ def pytest_runtest_makereport(item, call):
         fail_check_points = builtins.fail_check_point.get(DataRuntime.tc_info.name, [])
         if not fail_check_points and report.failed:
             for platform, driver in getattr(builtins, "dict_driver").items():
-                attach_name = f"{platform}_{datetime_util.get_current_time(time_format="%d-%Y-%m_%H:%M:%S")}.png"
+                attach_name = f"{platform}_{datetime_util.get_current_time(time_format="%d-%m-%Y_%H:%M:%S")}.png"
                 allure.attach(
                     name=attach_name,
                     body=driver.get_screenshot_as_png(),
@@ -262,6 +264,8 @@ def pytest_sessionfinish(session):
     logger.info("‣ Customized allure test results")
     # Delete all .container files
     allure_result_dir = Path(allure_result_dir)
+    with open(f"{allure_result_dir}/environment.properties", "w") as f:
+        f.write(f"Browser={DataRuntime.config.platforms.web.browser.capitalize()}\n")
     container_files = allure_result_dir.glob("*-container.json")
     for container_file in container_files:
         file_util.delete_file(container_file)
@@ -279,20 +283,17 @@ def pytest_sessionfinish(session):
                 for _sub_steps in steps:
                     sub_steps = _sub_steps.get("steps", "")
                     for sub_step in sub_steps:
-                        # if sub_step['name'] in builtins.fail_check_point[json_obj['name']]:  # noqa
-                        if sub_step['name'] in [list(entry.keys())[0] for entry in
-                                                builtins.fail_check_point[json_obj['name']]]:  # noqa
+                        # Loop for sub-steps and change status to failed if checkpoint failed
+                        if sub_step['name'] in [
+                            list(entry.keys())[0] for entry in builtins.fail_check_point.get(json_obj.get('name'), [])
+                        ]:
                             sub_step["status"] = "failed"
                             _sub_steps["status"] = "failed"
 
-                        # pytest.set_trace()
-                        # if json_obj['name'] in _fail_tcs_name and \
-                        #         sub_step['name'] in builtins.fail_check_point[json_obj['name']]:  # noqa
-                        #     del sub_step['attachments']
-
                 # labels - allure report
                 # Present, cook (value, name in parentSuite and Suite)
-                raw_labels = json_obj["labels"]
+                raw_labels = json_obj.get("labels")
+
                 json_obj["labels"] = [
                     _label for _label in raw_labels
                     if ("parentSuite" == _label.get('name') or "suite" == _label.get('name'))
@@ -306,3 +307,4 @@ def pytest_sessionfinish(session):
                 # Write the modified json object
                 with result_file.open("w") as _f:
                     json.dump(json_obj, _f)
+

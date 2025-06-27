@@ -7,10 +7,10 @@ class Web:
 
     def __init__(self, driver):
         self._driver = driver
-        self.login_page = LoginPage(self._driver)
-        self.top_navigation = TopNavigation(self._driver)
+        self.login_page = LoginPage(driver)
+        self.top_navigation = TopNavigation(driver)
 
-    def navigate_to_flo_web(self):
+    def navigate_to_aquariux(self):
         self._driver.get(DataRuntime.config.platforms.web.url)
         return self.login_page
 

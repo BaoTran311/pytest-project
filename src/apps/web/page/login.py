@@ -2,25 +2,35 @@ from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 
 from src.apps.web.page.general import GeneralPage
+from src.utils.string_util import cook_element
 
 
 class LoginPage(GeneralPage):
     def __init__(self, driver=None):
         super().__init__(driver)
 
-    __txt_username = (By.NAME, "sign_username__")
-    __txt_password = (By.NAME, "sign_passwd__")
-    __btn_login = (By.XPATH, "//button[text()='Sign In']")
-    __txt_error = (By.CSS_SELECTOR, "#LoginForm .error-text")
+    __tab_dyn = (By.XPATH, "//div[starts-with(@data-testid, 'tab-login-account-type-{}')]")
 
-    def login(self, username, password):
-        self.logger.debug(f"Account: {username} - {password}")
-        self.actions.send_keys(self.__txt_username, username, press=Keys.TAB)
+    __txt_account_id = (By.CSS_SELECTOR, "input[data-testid='login-user-id']")
+    __txt_password = (By.CSS_SELECTOR, "input[data-testid='login-password']")
+    __btn_signin = (By.CSS_SELECTOR, "button[data-testid='login-submit']")
+    __alert_error = (By.CSS_SELECTOR, "div[data-testid='alert-error']")
+
+    def _login(self, account_id, password, tab):
+        _tab = {i: i for i in ('live', 'demo')}.get(tab)
+        self.actions.click(cook_element(self.__tab_dyn, _tab))
+        self.actions.send_keys(self.__txt_account_id, account_id, press=Keys.TAB)
         self.actions.send_keys(self.__txt_password, password, press=Keys.TAB)
-        self.actions.click(self.__btn_login)
+        self.actions.click(self.__btn_signin)
 
-    def get_error_text(self):
-        return self.actions.get_text(self.__txt_error)
+    def login_with_demo_account(self, account_id, password):
+        self._login(account_id, password, "demo")
 
-    def is_error_text_is_displayed_with_correct_content(self, content):
-        return self.get_error_text() == content
+    def login_with_live_account(self, account_id, password):
+        self._login(account_id, password, "live")
+
+    def get_alert_error_content(self):
+        return self.actions.get_text(self.__alert_error, visible=True).strip()
+
+    def is_alert_error_displayed_with_correct_content(self, content):
+        return self.get_alert_error_content() == content

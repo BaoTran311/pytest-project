@@ -1,0 +1,26 @@
+---
+# Credentials
+user: 2092009821
+password: QWFAMTIzNDU2Nzg5
+
+api:
+  endpoint_api: ...
+
+platforms:
+  web:
+    browser: chrome
+    url: https://aqxtrader.aquariux.com/
+  mac:
+    bundle_id: bundle id mac
+    appium: 4727
+    system: 10101
+  iphone:
+    device_uid: device uid iphone
+    bundle_id: bundle id iphone
+    appium: 4725
+    wda: 8102
+  ipad:
+    device_uid: device uid ipad
+    bundle_id: bundle id ipad
+    appium: 4725
+    wda: 8102

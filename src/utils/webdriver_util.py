@@ -72,8 +72,8 @@ def create_chrome_driver(
             # Issue: https://bugs.chromium.org/p/chromium/issues/detail?id=737535
             driver.set_window_size(1920, 1080)
         else:
-            # driver.maximize_window()
-            driver.set_window_size(1380, 1080)
+            driver.maximize_window()
+            # driver.set_window_size(1380, 1080)
 
         return driver
     except Exception as ex:
@@ -123,8 +123,8 @@ def create_firefox_driver(
             # Issue: https://bugs.chromium.org/p/chromium/issues/detail?id=737535
             driver.set_window_size(1920, 1080)
         else:
-            # driver.maximize_window()
-            driver.set_window_size(1380, 1080)
+            driver.maximize_window()
+            # driver.set_window_size(1380, 1080)
 
         return driver
     except Exception as ex:
@@ -148,6 +148,5 @@ def init_webdriver(
             driver = create_chrome_driver(**kwargs)
         case "firefox":
             driver = create_firefox_driver(**kwargs)
-    pytest.set_trace()
     builtins.dict_driver[browser] = driver
     return driver
