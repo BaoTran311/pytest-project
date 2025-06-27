@@ -68,14 +68,16 @@ def pytest_sessionstart(session):
 @pytest.hookimpl(tryfirst=True)
 def pytest_runtest_setup(item: pytest.Item):
     print("\x00")
-    raw_tc_name = item.parent.name.split("_")[1:]
-    tc_name = raw_tc_name[0].replace(".py", "")
+    raw_tc_module = item.parent.name.split("_")[1:]
+    tc_module = raw_tc_module[0].replace(".py", "")
+    tc_name = ' '.join(item.name.replace("test_", "").split("_")).capitalize()
+    full_tc_name = f"{tc_module} - {tc_name}"
     parent_suite, *test_suite = item.parent.module.__name__.split(".")[1:-1]  # noqa
-    DataRuntime.tc_info = dotdict(name=tc_name, test_suite=test_suite, parent_suite=parent_suite)
-    allure.dynamic.testcase(re.sub(r"\bTC(\d+)\b", r"TC-\1", tc_name.upper()), tc_name)
+    DataRuntime.tc_info = dotdict(name=full_tc_name, test_suite=test_suite, parent_suite=parent_suite)
+    allure.dynamic.testcase(re.sub(r"\bTC(\d+)\b", r"TC-\1", tc_module.upper()), full_tc_name)
 
     global _fail_check_point
-    builtins.fail_check_point[tc_name] = []  # noqa
+    builtins.fail_check_point[full_tc_name] = []  # noqa
 
 
 def pytest_runtest_call(item):  # Before each test case

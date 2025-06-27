@@ -32,5 +32,8 @@ class LoginPage(GeneralPage):
     def get_alert_error_content(self):
         return self.actions.get_text(self.__alert_error, visible=True).strip()
 
+    def wait_for_login_page_displays(self):
+        self.actions.wait_for_element_visible(cook_element(self.__tab_dyn, "demo"))
+
     def is_alert_error_displayed_with_correct_content(self, content):
         return self.get_alert_error_content() == content

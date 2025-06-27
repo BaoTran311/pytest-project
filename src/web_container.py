@@ -12,7 +12,7 @@ class Web:
 
     def navigate_to_aquariux(self):
         self._driver.get(DataRuntime.config.platforms.web.url)
-        return self.login_page
+        self.login_page.wait_for_login_page_displays()
 
     def refresh_page(self):
         self._driver.refresh()

@@ -7,8 +7,7 @@ from src.utils import logger
 from src.utils.assert_util import verify
 
 
-# @allure.testcase("TC1 - Login with valid credential")
-def test(web):
+def test_login_with_valid_credential(web):
     logger.info("Step 1: Navigate to flo web")
     web.navigate_to_aquariux()
 

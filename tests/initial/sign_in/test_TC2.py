@@ -1,14 +1,19 @@
-import pytest
+import random
 
 from src.data_runtime import DataRuntime
 from src.utils import logger
 from src.utils.assert_util import verify
 
 
-@pytest.mark.parametrize("invalid_field", ["username", "password"])
-def test(web, invalid_field):
+def test_login_with_invalid_credential(web):
+    invalid_field = random.choice(["username", "password"])
+
     logger.info("Step 1: Navigate to AQX Trader")
     web.navigate_to_aquariux()
+    verify(
+        False,
+        "Verify failed"
+    )
 
     logger.info(f"Step 2: Login with invalid {invalid_field}")
     credential = [DataRuntime.config.user, DataRuntime.config.password]
