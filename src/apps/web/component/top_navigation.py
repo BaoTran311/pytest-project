@@ -10,11 +10,18 @@ class TopNavigation:
         self.actions = WebActions(self._driver)
         self.logger = logger
 
-    __ic_account = (By.XPATH, "//i[contains(@class, 'icon avatar') and ./ancestor::tooltip]")
-    __top_nav_bar = (By.XPATH, "//div[contains(@class, 'nav-bar-on-top')]")
+    __btn_setting = (By.CSS_SELECTOR, "div[data-testid='setting-button']")
+    __btn_switch_theme = (By.CSS_SELECTOR, "div[data-testid='switch-theme-button']")
+    __btn_notification = (By.CSS_SELECTOR, "div[data-testid='notification-selector']")
 
-    def wait_for_top_navigation_displayed(self):
-        self.actions.wait_for_element_visible(self.__top_nav_bar)
+    def wait_for_top_navigation_displays(self):
+        self.actions.wait_for_element_visible(self.__btn_setting)
 
-    def is_top_navigation_displayed(self):
-        return self.actions.is_displayed(self.__top_nav_bar)
+    def is_setting_button_displayed(self):
+        return self.actions.is_displayed(self.__btn_setting)
+
+    def is_switch_theme_button_displayed(self):
+        return self.actions.is_displayed(self.__btn_switch_theme)
+
+    def is_notification_button_displayed(self):
+        return self.actions.is_displayed(self.__btn_notification)

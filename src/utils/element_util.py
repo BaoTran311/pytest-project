@@ -24,6 +24,9 @@ class Actions:
         return webdriver_wait.until(func(element))
 
     wait_for_element_visible = functools.partialmethod(__wait_for_element__, func=exc.visibility_of_element_located)
+    wait_for_element_not_visible = functools.partialmethod(
+        __wait_for_element__, func=exc.invisibility_of_element_located
+    )
     wait_for_element_presence = functools.partialmethod(__wait_for_element__, func=exc.presence_of_element_located)
     wait_for_element_clickable = functools.partialmethod(__wait_for_element__, func=exc.element_to_be_clickable)
 

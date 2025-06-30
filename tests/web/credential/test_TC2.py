@@ -10,10 +10,6 @@ def test_login_with_invalid_credential(web):
 
     logger.info("Step 1: Navigate to AQX Trader")
     web.navigate_to_aquariux()
-    verify(
-        False,
-        "Verify failed"
-    )
 
     logger.info(f"Step 2: Login with invalid {invalid_field}")
     credential = [DataRuntime.config.user, DataRuntime.config.password]

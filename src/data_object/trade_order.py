@@ -1,0 +1,3 @@
+class TradeOrder:
+    def __init__(self):
+        ...

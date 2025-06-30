@@ -1,7 +1,7 @@
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 
-from src.apps.web.page.general import GeneralPage
+from src.apps.web.page.general_page import GeneralPage
 from src.utils.string_util import cook_element
 
 
@@ -10,7 +10,6 @@ class LoginPage(GeneralPage):
         super().__init__(driver)
 
     __tab_dyn = (By.XPATH, "//div[starts-with(@data-testid, 'tab-login-account-type-{}')]")
-
     __txt_account_id = (By.CSS_SELECTOR, "input[data-testid='login-user-id']")
     __txt_password = (By.CSS_SELECTOR, "input[data-testid='login-password']")
     __btn_signin = (By.CSS_SELECTOR, "button[data-testid='login-submit']")
@@ -23,8 +22,10 @@ class LoginPage(GeneralPage):
         self.actions.send_keys(self.__txt_password, password, press=Keys.TAB)
         self.actions.click(self.__btn_signin)
 
-    def login_with_demo_account(self, account_id, password):
+    def login_with_demo_account(self, account_id, password, *, wait_completed=False):
         self._login(account_id, password, "demo")
+        if wait_completed:
+            self.actions.wait_for_element_not_visible(self.__btn_signin)
 
     def login_with_live_account(self, account_id, password):
         self._login(account_id, password, "live")

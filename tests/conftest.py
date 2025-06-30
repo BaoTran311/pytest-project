@@ -2,7 +2,6 @@ import builtins
 import json
 import logging
 import os
-import re
 import subprocess
 import time
 from contextlib import suppress
@@ -32,11 +31,12 @@ def pytest_addoption(parser):
     support.addoption("--user", action="store", default="", help="Support change user")
     support.addoption("--password", action="store", default="", help="Support generate password")
     support.addoption("--record", action="store_true", default=False, help="Support recording test running")
+    support.addoption("--remote", action="store_true", default=False, help="Support run test with standalone mode")
 
     project = parser.getgroup("Projects")
     project.addoption("--browser", action="store")
     project.addoption("--headless", action="store_true", default=False)
-    parser.addoption("--no_reset", action="store_true", default=False)
+    parser.addoption("--no_reset", action="store_true", default=False, help="Run test using current WDA for iOS deivce")
 
 
 def pytest_sessionstart(session):
@@ -65,6 +65,7 @@ def pytest_sessionstart(session):
     if runtime_option['browser']:
         DataRuntime.config.platforms.web.browser = runtime_option['browser']
 
+
 @pytest.hookimpl(tryfirst=True)
 def pytest_runtest_setup(item: pytest.Item):
     print("\x00")
@@ -72,9 +73,9 @@ def pytest_runtest_setup(item: pytest.Item):
     tc_module = raw_tc_module[0].replace(".py", "")
     tc_name = ' '.join(item.name.replace("test_", "").split("_")).capitalize()
     full_tc_name = f"{tc_module} - {tc_name}"
-    parent_suite, *test_suite = item.parent.module.__name__.split(".")[1:-1]  # noqa
+    parent_suite, *test_suite = item.parent.module.__name__.split(".")[2:-1]  # noqa
     DataRuntime.tc_info = dotdict(name=full_tc_name, test_suite=test_suite, parent_suite=parent_suite)
-    allure.dynamic.testcase(re.sub(r"\bTC(\d+)\b", r"TC-\1", tc_module.upper()), full_tc_name)
+    # allure.dynamic.testcase(re.sub(r"\bTC(\d+)\b", r"TC-\1", tc_module.upper()), full_tc_name)
 
     global _fail_check_point
     builtins.fail_check_point[full_tc_name] = []  # noqa
@@ -105,7 +106,7 @@ def pytest_runtest_logreport(report):
         status = report.outcome
         printlog = logger.info if status == "passed" else logger.warning
         printlog("-------------")  # noqa
-        printlog(f"Test case   | {test_case_name}")
+        printlog(f"Test case   | {DataRuntime.tc_info.name}")  # noqa
         printlog(f"Test status | {status.upper()} ({datetime_util.pretty_time(report.duration)})")  # noqa
         printlog("-------------")
 
@@ -268,6 +269,8 @@ def pytest_sessionfinish(session):
     allure_result_dir = Path(allure_result_dir)
     with open(f"{allure_result_dir}/environment.properties", "w") as f:
         f.write(f"Browser={DataRuntime.config.platforms.web.browser.capitalize()}\n")
+        f.write(
+            f"Aquariux_TestCases=https://docs.google.com/spreadsheets/d/1TFzYPzAz5Eve0monmAXT7f0oTUfx_GGeGkdeUwLT5bE")
     container_files = allure_result_dir.glob("*-container.json")
     for container_file in container_files:
         file_util.delete_file(container_file)
@@ -309,4 +312,3 @@ def pytest_sessionfinish(session):
                 # Write the modified json object
                 with result_file.open("w") as _f:
                     json.dump(json_obj, _f)
-
