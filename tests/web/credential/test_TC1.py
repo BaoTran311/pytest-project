@@ -1,4 +1,3 @@
-from src.data_runtime import DataRuntime
 from src.utils import logger
 from src.utils.assert_util import verify
 
@@ -8,8 +7,7 @@ def test_login_with_valid_credential(web):
     web.navigate_to_aquariux()
 
     logger.info("Step 2: Login with valid account")
-    credential = [DataRuntime.config.user, DataRuntime.config.password]
-    web.login_page.login_with_demo_account(*credential, wait_completed=True)
+    web.login_page.login_with_demo_account(wait_completed=True)
     verify(
         web.trade_page.top_navigation.is_setting_button_displayed(),
         f"Verify setting button on Top Navigation displays"

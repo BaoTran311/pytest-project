@@ -20,13 +20,14 @@ _logger = logging.getLogger(consts.PYTHON_CONFIG)
 
 def create_chrome_driver(
         *,
-        headless=False,
+        # headless=False,
         full_screen=False,
         extension=None,
         user_profile: str = None,
 ) -> WebDriver:
     try:
         os_name = platform.system()  # Mac: Darwin | Win: Windows | Linux: Linux
+        headless = DataRuntime.runtime_option.headless
         chrome_options = webdriver.ChromeOptions()
 
         # Added argument general
@@ -84,12 +85,13 @@ def create_chrome_driver(
 
 def create_firefox_driver(
         *,
-        headless=False,
+        # headless=False,
         full_screen=False,
         extension=None,
         user_profile: str = None
 ) -> webdriver:
     os_name = platform.system()
+    headless = DataRuntime.runtime_option.headless
     options = webdriver.FirefoxOptions()
 
     if headless:
@@ -135,12 +137,11 @@ def create_firefox_driver(
 
 def init_webdriver(
         *,
-        headless=False,
         full_screen=False,
         extension=None,
         user_profile: str = None
 ):
-    kwargs = dict(headless=headless, full_screen=full_screen, extension=extension, user_profile=user_profile)
+    kwargs = dict(full_screen=full_screen, extension=extension, user_profile=user_profile)
     browser = DataRuntime.config.platforms.web.browser
     logger.info(f"Starting {browser} webdriver ...")
     match browser:

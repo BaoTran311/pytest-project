@@ -30,6 +30,24 @@ class Actions:
     wait_for_element_presence = functools.partialmethod(__wait_for_element__, func=exc.presence_of_element_located)
     wait_for_element_clickable = functools.partialmethod(__wait_for_element__, func=exc.element_to_be_clickable)
 
+    def wait_for_condition(self, condition_func, timeout=TIMEOUT, interval=0.1, *, show_log=False):
+        """
+        Wait until the given condition returns True using WebDriverWait.
+
+        Args:
+            condition_func: A lambda function that returns True when the desired condition is met
+            timeout (float): Maximum time to wait in seconds
+            interval (float): Time between condition checks in seconds
+
+        Raises:
+            TimeoutException: If the condition is not satisfied within the timeout period
+        """
+        try:
+            WebDriverWait(self._driver, timeout, poll_frequency=interval).until(lambda d: condition_func())
+        except TimeoutException:
+            if show_log:
+                _logger.error("Condition not met within timeout")
+
     def find_element(
             self, element: tuple, /,
             *, timeout=TIMEOUT, visible=True, wait=True, show_log=True
