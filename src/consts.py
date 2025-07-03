@@ -11,6 +11,9 @@ ENV_DIR = PROJECT_ROOT / "config"
 TIMEOUT = 10
 DISPLAY_TIMEOUT = 3
 
+# Recursive
+MAX_RETRIES = 3
+
 # General config
 PYTHON_CONFIG = "pythonConfig"
 

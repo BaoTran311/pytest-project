@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import random
+import re
 import string
 import uuid
 
@@ -19,12 +20,6 @@ def random_string(size=8, *, only_letter=False):
     if only_letter:
         return "".join([random.choice(string.ascii_letters + string.ascii_letters[::-1]) for _ in range(size)])
     return "".join([random.choice(string.ascii_letters + string.digits) for _ in range(size)])
-
-
-def get_case_id(request):
-    # Get case id from fixtures request (pytest.request)
-    path = str(request.path)  # parse path to string
-    return path.split("/")[-1].split(".")[0].removeprefix("test_").split("_")[0]
 
 
 def unique_uid():
@@ -53,3 +48,7 @@ def encrypt_rsa_base64(raw_value, keypath):
         value = raw_value.encode("utf-8")
     e_value = cipher.encrypt(value)
     return base64.b64encode(e_value).decode("utf-8")
+
+
+def format_number_string(text):
+    return re.sub(r"[^\d.]", "", text)

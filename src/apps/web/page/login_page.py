@@ -24,6 +24,7 @@ class LoginPage(GeneralPage):
         self.actions.click(self.__btn_signin)
         if wait_completed:
             self.actions.wait_for_element_not_visible(self.__btn_signin)
+            self.wait_for_loading_complete()
 
     def login_with_demo_account(self, account_id="", password="", *, wait_completed=False):
         account_id = account_id or DataRuntime.config.user

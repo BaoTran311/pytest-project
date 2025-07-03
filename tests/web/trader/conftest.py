@@ -1,6 +1,8 @@
 import pytest
 
+from src.consts import DISPLAY_TIMEOUT
 from src.enums.side_bar import SideBar
+from src.enums.watch_list import WatchList
 from src.utils import webdriver_util, logger
 from src.web_container import Web
 
@@ -12,19 +14,27 @@ def web():
     driver.quit()
 
 
+@pytest.fixture(scope="package")
+def symbol():
+    return "BTCUSD.std"
+
+
 @pytest.fixture(scope="package", autouse=True)
 def navigate_n_login(web):
-    logger.info("▶ Precondition: \n")
+    logger.info("▶ Precondition:")
 
-    logger.info("Navigate & login to Aquariux")
+    logger.info("\t- Navigate & login to Aquariux")
     web.navigate_to_aquariux()
     web.login_page.login_with_demo_account(wait_completed=True)
 
-    logger.info("Open Trader")
+    logger.info("\t- Open Trader")
     web.home_page.select_sidebar(SideBar.TRADE)
 
-    logger.info("Disable One-Click Trading")
-    web.trade_page.disable_one_click_trading()
+    logger.info("\t- Select 'All' watchlist")
+    web.trade_page.select_watchlist(WatchList.ALL)
 
-    logger.info("Collapse Trade Details")
+    logger.info("\t- Collapse Trade Details")
     web.trade_page.place_order.collapse_trade_details()
+
+    logger.info("\t- Disable One-Click Trading")
+    web.trade_page.disable_one_click_trading()

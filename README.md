@@ -15,7 +15,7 @@ A comprehensive cross-platform test automation framework built with Python, Pyte
 
 ## 📋 Prerequisites
 
-- Python 3.8+
+- Python 3.10+
 - Node.js (for Allure reporting)
 - FFmpeg (for video recording)
 - Appium Server (for mobile testing)

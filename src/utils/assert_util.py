@@ -5,9 +5,12 @@ from pytest_check import check
 from src.data_runtime import DataRuntime
 from src.utils import logger, datetime_util
 
+_passed_icon = "✓"
+_failed_icon = "✘"
+
 
 def verify(result, msg):
-    logger.info(msg)
+    logger.info(f"{_passed_icon if result else _failed_icon} {msg}")
     if not result:
         attachments = dict()
         for platform, driver in getattr(builtins, "dict_driver").items():

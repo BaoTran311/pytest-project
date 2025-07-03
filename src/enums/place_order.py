@@ -7,3 +7,8 @@ class OrderType:
 class VolumeType:
     SIZE = "Size"
     UNITS = "Units"
+
+
+class OrderSide:
+    BUY = "Buy"
+    SELL = "Sell"
