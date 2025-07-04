@@ -16,7 +16,7 @@ def web():
 
 @pytest.fixture(scope="package")
 def symbol():
-    return "BTCUSD.std"
+    return "DASHUSD.std"
 
 
 @pytest.fixture(scope="package", autouse=True)

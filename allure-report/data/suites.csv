@@ -1,0 +1,4 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"","3651","TC2 - Login with invalid credential","Credential","Fri Jul 04 21:49:38 ICT 2025","passed","Fri Jul 04 21:49:41 ICT 2025","","","",""
+"","10322","TC3 - Place market order with stop loss and take profit","Trader","Fri Jul 04 21:50:03 ICT 2025","broken","Fri Jul 04 21:50:14 ICT 2025","","","",""
+"","17905","TC1 - Login with valid credential","Credential","Fri Jul 04 21:49:13 ICT 2025","passed","Fri Jul 04 21:49:31 ICT 2025","","","",""
