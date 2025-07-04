@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 
 from src.apps.web.popup.trade_confirmation_popup import TradeConfirmationPopup
 from src.data_object.trade_order import TradeOrder
-from src.enums.place_order import VolumeType
+from src.enums.order_enum import VolumeType
 from src.utils import logger, string_util
 from src.utils.element_util import WebActions
 

@@ -1,8 +1,8 @@
 import pytest
 
 from src.consts import DISPLAY_TIMEOUT
-from src.enums.side_bar import SideBar
-from src.enums.watch_list import WatchList
+from src.enums.side_bar_enum import SideBar
+from src.enums.watch_list_enum import WatchList
 from src.utils import webdriver_util, logger
 from src.web_container import Web
 

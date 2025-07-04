@@ -1,5 +1,5 @@
 from src.data_object.trade_order import MarketTradeOrder
-from src.enums.place_order import OrderSide, VolumeType
+from src.enums.order_enum import OrderSide, VolumeType
 from src.utils import logger
 from src.utils.assert_util import verify
 from src.utils.string_util import format_number_string

@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 from src.apps.web.component.top_navigation import TopNavigation
 from src.apps.web.page.general_page import GeneralPage
 from src.apps.web.popup.trade_confirmation_popup import TradeConfirmationPopup
-from src.enums.side_bar import SideBar
+from src.enums.side_bar_enum import SideBar
 from src.utils import string_util
 
 

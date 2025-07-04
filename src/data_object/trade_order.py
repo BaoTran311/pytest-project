@@ -1,4 +1,4 @@
-from src.enums.place_order import OrderType, OrderSide, VolumeType
+from src.enums.order_enum import OrderType, OrderSide, VolumeType
 
 
 class TradeOrder:

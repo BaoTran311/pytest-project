@@ -12,3 +12,9 @@ class VolumeType:
 class OrderSide:
     BUY = "Buy"
     SELL = "Sell"
+
+
+class AssetOrderType:
+    OPEN_POSITIONS = "Open Positions"
+    PENDING_ORDERS = "Pending Orders"
+    ORDER_HISTORY = "Order History"
